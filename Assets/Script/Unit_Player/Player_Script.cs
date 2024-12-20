@@ -2,9 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class Player_Script : MonoBehaviour
 {
+    public GameManager gm;
+
     Rigidbody rg;
     public bool isJumping = false;
 
@@ -47,6 +50,15 @@ public class Player_Script : MonoBehaviour
         //if (isJumping && rg.velocity.y == 0)
         //   isJumping = false;
 
+    }
+
+    public void OnTriggerEnter(Collider scoreObj)
+    {
+        if (scoreObj.CompareTag("Score"))
+        {
+            scoreObj.gameObject.SetActive(false);
+            gm.IncreaseScore();
+        }
     }
 
     private void OnTriggerStay(Collider other)
