@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Boat : Movement
 {
+    /// <summary> 플레이어가 보트 위에 대기하는지의 유무 </summary>
     public bool isOnBoat = false;
 
     protected override void Init()
@@ -18,7 +19,6 @@ public class Boat : Movement
     {
         if (collision.gameObject.tag == "Playerrrr")
         {
-            Debug.Log("111");
             isOnBoat = true;
         }
     }

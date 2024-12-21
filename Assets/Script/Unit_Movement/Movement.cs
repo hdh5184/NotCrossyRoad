@@ -4,17 +4,24 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
+    /// <summary> 이동 속도 </summary>
     [SerializeField]
     protected   float   speed;
+    /// <summary> 이동 방향 </summary>
     [SerializeField]
     protected   Vector3 moveVec;
+    /// <summary> 우측 이동의 유무 </summary>
     [SerializeField]
     protected   bool    isRunRight;
 
+    /// <summary> 초기 설정 시 최소 이동 속도 </summary>
     public      float   MinSpeed = 7f;
+    /// <summary> 초기 설정 시 최대 이동 속도 </summary>
     public      float   MaxSpeed = 15f;
 
+    /// <summary> 좌측 필드 경계 값 </summary>
     public      float   MinZ = -14;
+    /// <summary> 우측 필드 경계 값 </summary>
     public      float   MaxZ = 14;
 
     void Start()
