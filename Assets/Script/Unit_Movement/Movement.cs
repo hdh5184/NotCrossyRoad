@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Movement : MonoBehaviour
 {
+    [Header("Move")]
     /// <summary> 이동 속도 </summary>
     [SerializeField]
     protected   float   speed;
@@ -14,27 +15,30 @@ public class Movement : MonoBehaviour
     [SerializeField]
     protected   bool    isRunRight;
 
+
+    [Header("Move Limit")]
     /// <summary> 초기 설정 시 최소 이동 속도 </summary>
     public      float   MinSpeed = 7f;
     /// <summary> 초기 설정 시 최대 이동 속도 </summary>
     public      float   MaxSpeed = 15f;
-
     /// <summary> 좌측 필드 경계 값 </summary>
     public      float   MinZ = -14;
     /// <summary> 우측 필드 경계 값 </summary>
     public      float   MaxZ = 14;
 
-    void Start()
+
+    protected void Start()
     {
         Init();
     }
 
-    void Update()
+    protected virtual void Update()
     {
         Check_Turn();
 
         Run();
     }
+
 
     /// <summary>
     /// 게임 시작 시 자동차 속성을 초기화한다.
@@ -46,6 +50,7 @@ public class Movement : MonoBehaviour
         isRunRight  = true;
     }
 
+
     /// <summary>
     /// 자동차가 반대로 돌아가는 지 검사한다.
     /// </summary>
@@ -54,6 +59,7 @@ public class Movement : MonoBehaviour
         if (IsOverEdge()) moveVec *= -1;
     }
 
+
     /// <summary>
     /// 자동차가 달리는 방향으로 위치를 이동한다.
     /// </summary>
@@ -61,6 +67,7 @@ public class Movement : MonoBehaviour
     {
         transform.Translate(moveVec * Time.deltaTime);
     }
+
 
     /// <summary>
     /// 자동차가 도로 필드 경계(좌표 z)에 도달하는 지 검사한다.

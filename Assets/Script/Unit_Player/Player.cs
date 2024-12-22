@@ -7,15 +7,24 @@ using UnityEngine;
 /// </summary>
 public class Player : MonoBehaviour
 {
+    [Header("GameManager")]
     public  GameManager gm;
 
+    [Header("Component")]
     [SerializeField]
     private Rigidbody   rg;
 
+    /// <summary> 플레이어가 탑승하는 보트 </summary>
+    private Boat        ridingBoat;
 
+
+    [Header("Player State")]
     /// <summary> 플레이어의 점프 여부 </summary>
     [SerializeField]
     private bool        isJumping;
+    /// <summary> 플레이어의 보트 탑승 여부 </summary>
+    [SerializeField]
+    private bool        isOnBoat;
 
     void Start()
     {
@@ -25,16 +34,23 @@ public class Player : MonoBehaviour
     
     void Update()
     {
+        if (!gm.Check_IsGamePlay()) return;
+
         Jump();
     }
+
 
     /// <summary>
     /// 게임 시작 시 플레이어 속성을 초기화한다.
     /// </summary>
     private void Init()
     {
-        isJumping = false;
+        ridingBoat  = null;
+
+        isJumping   = false;
+        isOnBoat    = false;
     }
+
 
     /// <summary>
     /// 플레이어가 제자리에서 뛰며 이동한다.
@@ -45,9 +61,10 @@ public class Player : MonoBehaviour
 
         if      (Input.GetKeyDown(KeyCode.UpArrow))     JumpForKeyDown('U');
         else if (Input.GetKeyDown(KeyCode.DownArrow))   JumpForKeyDown('D');
-        else if (Input.GetKeyDown(KeyCode.RightArrow))  JumpForKeyDown('R');
         else if (Input.GetKeyDown(KeyCode.LeftArrow))   JumpForKeyDown('L');
+        else if (Input.GetKeyDown(KeyCode.RightArrow))  JumpForKeyDown('R');
     }
+
 
     /// <summary>
     /// 방향키 입력 시 해당 키의 방향으로 플레이어가 이동한다.
@@ -59,6 +76,8 @@ public class Player : MonoBehaviour
     {
         isJumping = true;
 
+        if (isOnBoat) UnMeetBoat();
+
         switch (key)
         {
             case 'U':   rg.velocity = new Vector3(-10, 1.5f, 0);    break;
@@ -67,6 +86,7 @@ public class Player : MonoBehaviour
             case 'R':   rg.velocity = new Vector3(0, 1.5f, 10);     break;
         }
     }
+
 
     /// <summary>
     /// 플레이어가 착지 시 이동 힘을 해제한다.
@@ -78,24 +98,58 @@ public class Player : MonoBehaviour
         isJumping = false;
     }
 
+
+    /// <summary>
+    /// 올라탄 보트에 플레이어 transform을 전달한다.
+    /// </summary>
+    /// <param name="boat"> 보트의 Collision </param>
+    private void MeetBoat(Collision boat)
+    {
+        isOnBoat    = true;
+
+        ridingBoat  = boat.gameObject.GetComponent<Boat>();
+        ridingBoat.MeetPlayer(transform);
+    }
+
+
+    /// <summary>
+    /// 올라탄 보트로부터 빠진다.
+    /// </summary>
+    private void UnMeetBoat()
+    {
+        ridingBoat.UnMeetPlayer();
+        ridingBoat  = null;
+
+        isOnBoat    = false;
+    }
+
+
+    /// <summary>
+    /// 올라탄 보트에 플레이어 transform을 전달한다.
+    /// </summary>
+    /// <param name="boat"> 보트 오브젝트 </param>
+    private void MeetBoat(GameObject boat)
+    {
+        boat.GetComponent<Boat>().MeetPlayer(transform);
+        //boat.gameObject.GetComponent<Boat>().MeetPlayer(this);
+    }
+
+
     /// <summary>
     /// 플레이어가 점수 아이템을 획득한다.
     /// </summary>
-    /// <param name="score">
-    /// 점수 아이템 오브젝트의 Collider
-    /// </param>
+    /// <param name="score"> 점수 아이템 오브젝트의 Collider </param>
     private void GetScore(Collider score)
     {
         score.gameObject.SetActive(false);
         gm.IncreaseScore();
     }
 
+
     /// <summary>
     /// 플레이어가 점수 아이템을 획득한다.
     /// </summary>
-    /// <param name="score">
-    /// 점수 아이템 오브젝트
-    /// </param>
+    /// <param name="score"> 점수 아이템 오브젝트 </param>
     private void GetScore(GameObject score)
     {
         score.SetActive(false);
@@ -120,6 +174,13 @@ public class Player : MonoBehaviour
     }
 
 
+    /// <summary>
+    /// 플레이어의 위치를 지정한다.
+    /// </summary>
+    /// <param name="pos"> 플레이어 위치를 지정할 좌표 Vector </param>
+    public void SetPosition(Vector3 pos) => transform.position = pos;
+
+
     public void OnTriggerEnter(Collider collision)
     {
         if (collision.CompareTag("Score"))
@@ -131,10 +192,16 @@ public class Player : MonoBehaviour
     {
         switch (collision.gameObject.tag)
         {
-            case "River":
-            case "Car":     gm.GameOver(); break;
+            case "River"
+            when !gm.debugText_NoDrown:
+            gm.GameOver(); break;
 
-            case "Goal":    gm.GameClear(); break;
+            case "Car"
+            when !gm.Debug_isPlayerNotHit:
+            gm.GameOver(); break;
+
+            case "Goal":    gm.GameClear();
+                            rg.velocity = new Vector3(100f, 20f, 0); break;
         }
     }
 
@@ -142,13 +209,15 @@ public class Player : MonoBehaviour
     {
         switch (collision.gameObject.tag)
         {
-            case "Floor":
-            case "Boat":        Land(); break;
+            case "Floor":       
+            case "River":       Land();                 break;
 
-            case "WallLeft":    OverEdge('L'); break;
-            case "WallRight":   OverEdge('R'); break;
-            case "WallBack":    OverEdge('B'); break;
+            case "Boat":        Land();
+                                MeetBoat(collision);    break;
+
+            case "WallLeft":    OverEdge('L');  break;
+            case "WallRight":   OverEdge('R');  break;
+            case "WallBack":    OverEdge('B');  break;
         }
-        if (transform.position.x < -176 ) rg.velocity = new Vector3(100f, 20f, 0);
     }
 }
